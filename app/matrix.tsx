@@ -1,4 +1,5 @@
 "use client";
+import * as Sentry from "@sentry/nextjs";
 import mixpanel from "mixpanel-browser";
 import React from "react";
 
@@ -142,19 +143,30 @@ const Matrix = () => {
     [3, 0, 5, 0, 20, 0],
   ]);
   const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    try {
-      const inputMatrix = JSON.parse(event.target.value);
-      if (inputIsMatrix(inputMatrix)) {
-        setError("");
-        setMatrix(inputMatrix);
-        track(inputMatrix);
-      } else {
-        throw new Error("Invalid input: Not a 2D array of numbers");
-      }
-    } catch (error) {
-      console.error(error);
-      setError(`${error}`);
-    }
+    Sentry.startSpan(
+      {
+        name: "Matrix Input Change Handler",
+        attributes: {
+          inputValue: event.target.value, // for debugging purposes
+        },
+      },
+      (span) => {
+        console.debug({ span });
+        try {
+          const inputMatrix = JSON.parse(event.target.value);
+          if (inputIsMatrix(inputMatrix)) {
+            setError("");
+            setMatrix(inputMatrix);
+            track(inputMatrix);
+          } else {
+            throw new Error("Invalid input: Not a 2D array of numbers");
+          }
+        } catch (error) {
+          console.error(error);
+          setError(`${error}`);
+        }
+      },
+    );
   };
 
   React.useEffect(() => {
